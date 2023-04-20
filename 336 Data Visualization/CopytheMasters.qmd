@@ -1,0 +1,48 @@
+---
+title: "Copy The Masters"
+format: html
+embed-resources: true
+editor: visual
+---
+
+```{r, error=FALSE, warning=FALSE}
+library(dplyr)
+library(tidyr)
+library(readr)
+library(ggplot2)
+library(ggthemes)
+library(extrafont)
+```
+
+```{r}
+bad_drivers <- read_csv("/Users/jonathan/Downloads/bad-drivers.csv")
+bad_drivers$State[9] <- "D.C"
+
+Speeding <- bad_drivers %>%
+  select(`State`, `Number of drivers involved in fatal collisions per billion miles`, 
+     `Percentage Of Drivers Involved In Fatal Collisions Who Were Speeding`)%>%
+  mutate(`SpeedPerBill` = (`Number of drivers involved in fatal collisions per billion miles` * `Percentage Of Drivers Involved In Fatal Collisions Who Were Speeding`)/100) %>%
+  mutate(`BillTot` = (`Number of drivers involved in fatal collisions per billion miles` - `SpeedPerBill`))
+
+Speeding2 <- Speeding %>%
+  pivot_longer(cols = c(`BillTot`,`SpeedPerBill`), names_to = "Type", values_to = "Amount")
+
+```
+
+https://fivethirtyeight.com/features/which-state-has-the-worst-drivers/
+
+![](images/Drivers.png)
+
+```{r, output = FALSE}
+Speeding2 %>%
+ggplot() + geom_col(aes(y = `State`,x = `Amount`, fill =`Type`)) + scale_fill_manual(values=c("#ff270050", "#ff2700"), breaks=c("BillTot", "SpeedPerBill"), labels=c("TOTAL COLLISIONS PER BILLION MILES", "SPEEDING COLLISIONS PER BILLION MILES")) +   theme_fivethirtyeight() + 
+  guides(fill = guide_legend(reverse=TRUE, byrow = TRUE)) + 
+  scale_y_discrete(limit = rev(levels(as.factor(Speeding$State))), expand= expansion(add = c(-.1, 1))) +
+  theme(aspect.ratio=5/2 ,title = element_text(family = "Helvetica"),panel.grid.minor = element_blank(), panel.grid.major.y = element_blank(), panel.grid.major.x = element_line(color = "lightgray", size = .3),axis.ticks.length.x.top = unit(-.01, "inch"),axis.ticks.y = element_blank(), axis.ticks.length.x.bottom = element_blank(),axis.ticks.x.top = element_line(size = .25, color = "lightgray", margin(r = 7)),axis.text.x.top = element_text(hjust = .3,family = "Courier", margin = margin(0, 0, 5, 0, "pt")) ,axis.line.y.left = element_line(color = "black", size =.4, lineend = "square"), plot.title = element_text(face = "bold",size=15.5, hjust = .99), plot.subtitle = element_text(size = 11.5,hjust = 1.2) ,legend.position = "top",legend.justification = c(-1.5,1.3), legend.direction = "vertical", legend.text = element_text(size = 8, face = "bold", margin = margin(0)), legend.title = element_blank(), legend.key.size = unit(15, 'pt'), legend.key.width = unit(13, 'pt'), legend.key.height = unit(13, 'pt'), axis.text = element_text(size = 11), legend.spacing.y = unit(2.5, 'pt')) +
+  ylab(NULL) + 
+  xlab(NULL) + 
+  scale_x_continuous(position = "top", limits = c(0,25.5), expand = c(0,0)) + 
+  labs(title = "Drivers Involved In Fatal Crash While Speeding", subtitle = "As a share of the number of fatal collisions per billion miles, 2009")
+```
+
+![](images/CTM5.png)
